@@ -2,6 +2,8 @@
 
 A tool that uses multiple AI models to compare two versions of articles and determine which one is better. The tool processes pairs of articles from two input directories and generates voting results both in the console and CSV format.
 
+Important! This is an experiement, do not use this for real world tasks, it's unstable.
+
 ## Setup
 
 1. Create two directories: `input1` and `input2`
