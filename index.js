@@ -8,17 +8,25 @@ const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions'
 
 const AI_MODELS = [
-  'google/gemini-2.0-pro-exp-02-05:free',
+  // Free models:
+/*   'google/gemini-2.0-pro-exp-02-05:free',
   'deepseek/deepseek-r1:free',
   'deepseek/deepseek-chat:free',
   'meta-llama/llama-3.3-70b-instruct:free',
   'rekaai/reka-flash-3:free',
-  'qwen/qwq-32b:free'
-  /* Paid models:
+  'qwen/qwq-32b:free', */
+  
+  // Paid models:
   'google/gemini-2.0-flash-001',
-  'meta-llama/llama-3.1-405b-instruct',
+  //'meta-llama/llama-3.1-405b-instruct',
+  'meta-llama/llama-3.3-70b-instruct',
   'openai/gpt-4o-mini',
-  'mistralai/mistral-saba', */
+  'mistralai/mistral-saba',
+  //'deepseek/deepseek-r1',
+  'deepseek/deepseek-chat',
+  'cohere/command-r-08-2024',
+  //'qwen/qwq-32b',
+  'microsoft/phi-4',
 ]
 
 
@@ -131,9 +139,53 @@ async function saveResultsToCSV(results, filename) {
   console.log(`Results saved to ${csvPath}`)
 }
 
+async function printFinalSummary(allResults) {
+  // For console display
+  const summaryLines = []
+  summaryLines.push('\nFinal Summary Across All Articles:')
+  summaryLines.push('='.repeat(80))
+  summaryLines.push('Filename'.padEnd(40) + 'Article 1 Votes'.padEnd(20) + 'Article 2 Votes')
+  summaryLines.push('-'.repeat(80))
+
+  // For CSV format
+  const csvLines = []
+  csvLines.push(['Filename', 'Article 1 Votes', 'Article 2 Votes'].join(','))
+
+  // Add results for each file
+  for (const [filename, results] of Object.entries(allResults)) {
+    const article1Votes = results.filter(r => r && r.vote === 'article1').length
+    const article2Votes = results.filter(r => r && r.vote === 'article2').length
+    
+    // Add to console format
+    summaryLines.push(
+      filename.padEnd(40) +
+      article1Votes.toString().padEnd(20) +
+      article2Votes.toString()
+    )
+
+    // Add to CSV format
+    csvLines.push([filename, article1Votes, article2Votes].join(','))
+  }
+  
+  summaryLines.push('='.repeat(80))
+
+  // Print to console
+  console.log(summaryLines.join('\n'))
+
+  // Save files
+  const outputDir = path.join(process.cwd(), 'output')
+  await fs.mkdir(outputDir, { recursive: true })
+  
+  // Save CSV summary
+  const csvPath = path.join(outputDir, 'final_summary.csv')
+  await fs.writeFile(csvPath, csvLines.join('\n'))
+  console.log(`\nFinal summary saved to ${csvPath}`)
+}
+
 async function main() {
   const input1Dir = path.join(process.cwd(), 'input1')
   const input2Dir = path.join(process.cwd(), 'input2')
+  const allResults = {}
 
   try {
     const files = await fs.readdir(input1Dir)
@@ -155,10 +207,15 @@ async function main() {
           })
         )
         
+        allResults[file] = results
         printVotingTable(results, file)
         await saveResultsToCSV(results, file)
       }
     }
+
+    // Print final summary after all files are processed
+    await printFinalSummary(allResults)
+    
   } catch (error) {
     console.error('Error processing files:', error.message)
   }
