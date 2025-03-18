@@ -1,0 +1,13 @@
+{
+  "name": "ai-compare-articles",
+  "version": "1.0.0",
+  "description": "Compare articles using OpenRouter AI",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5"
+  }
+} 
