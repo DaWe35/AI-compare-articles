@@ -9,24 +9,36 @@ const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions'
 
 const AI_MODELS = [
   // Free models:
-/*   'google/gemini-2.0-pro-exp-02-05:free',
+  /*
+  'google/gemini-2.0-pro-exp-02-05:free',
   'deepseek/deepseek-r1:free',
   'deepseek/deepseek-chat:free',
+  'deepseek/deepseek-r1-distill-llama-70b:free',
   'meta-llama/llama-3.3-70b-instruct:free',
   'rekaai/reka-flash-3:free',
-  'qwen/qwq-32b:free', */
+  'qwen/qwq-32b:free',
+  'mistralai/mistral-small-24b-instruct-2501:free'
+  */
   
   // Paid models:
   'google/gemini-2.0-flash-001',
   //'meta-llama/llama-3.1-405b-instruct',
-  'meta-llama/llama-3.3-70b-instruct',
+  //'meta-llama/llama-3.3-70b-instruct',
+  'meta-llama/llama-3.1-8b-instruct',
   'openai/gpt-4o-mini',
-  'mistralai/mistral-saba',
   //'deepseek/deepseek-r1',
-  'deepseek/deepseek-chat',
+  //'deepseek/deepseek-chat',
+  //'deepseek/deepseek-r1-distill-llama-70b',
   'cohere/command-r-08-2024',
   //'qwen/qwq-32b',
+  'qwen/qwen-2.5-7b-instruct',
   'microsoft/phi-4',
+  'mistralai/mistral-saba',
+  'mistralai/mistral-small-3.1-24b-instruct',
+  'mistralai/mistral-7b-instruct',
+  'liquid/lfm-7b',
+  'amazon/nova-micro-v1',
+  'openchat/openchat-7b',
 ]
 
 
@@ -121,13 +133,27 @@ function printVotingTable(results, filename) {
   console.log('='.repeat(60))
 }
 
+function escapeCsvField(field) {
+  if (field === null || field === undefined) {
+    return ''
+  }
+  
+  const stringField = String(field)
+  // If the field contains comma, newline, or double quote, wrap it in quotes
+  if (stringField.includes(',') || stringField.includes('\n') || stringField.includes('"')) {
+    // Double up any double quotes and wrap the whole field in double quotes
+    return `"${stringField.replace(/"/g, '""')}"`
+  }
+  return stringField
+}
+
 async function saveResultsToCSV(results, filename) {
   const csvContent = [
     ['Model', 'Vote', 'Reason'],
     ...results.filter(result => result).map(result => [
-      result.model,
-      result.vote,
-      result.reason
+      escapeCsvField(result.model),
+      escapeCsvField(result.vote),
+      escapeCsvField(result.reason)
     ])
   ].map(row => row.join(',')).join('\n')
 
@@ -149,7 +175,11 @@ async function printFinalSummary(allResults) {
 
   // For CSV format
   const csvLines = []
-  csvLines.push(['Filename', 'Article 1 Votes', 'Article 2 Votes'].join(','))
+  csvLines.push([
+    escapeCsvField('Filename'),
+    escapeCsvField('Article 1 Votes'),
+    escapeCsvField('Article 2 Votes')
+  ].join(','))
 
   // Add results for each file
   for (const [filename, results] of Object.entries(allResults)) {
@@ -164,7 +194,11 @@ async function printFinalSummary(allResults) {
     )
 
     // Add to CSV format
-    csvLines.push([filename, article1Votes, article2Votes].join(','))
+    csvLines.push([
+      escapeCsvField(filename),
+      escapeCsvField(article1Votes),
+      escapeCsvField(article2Votes)
+    ].join(','))
   }
   
   summaryLines.push('='.repeat(80))
@@ -177,7 +211,7 @@ async function printFinalSummary(allResults) {
   await fs.mkdir(outputDir, { recursive: true })
   
   // Save CSV summary
-  const csvPath = path.join(outputDir, 'final_summary.csv')
+  const csvPath = path.join(outputDir, '_final_summary.csv')
   await fs.writeFile(csvPath, csvLines.join('\n'))
   console.log(`\nFinal summary saved to ${csvPath}`)
 }
